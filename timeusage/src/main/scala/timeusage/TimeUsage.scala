@@ -236,18 +236,21 @@ object TimeUsage {
     */
   def timeUsageGroupedTyped(summed: Dataset[TimeUsageRow]): Dataset[TimeUsageRow] = {
     import org.apache.spark.sql.expressions.scalalang.typed
+
+    def roundIt(v: Double): Double = Math.round(v*100.0)/100.0
+
     summed.groupByKey(row => (row.working, row.sex, row.age))
       .agg(
-        round(typed.avg[TimeUsageRow](_.primaryNeeds), 1).as[Double],
-        round(typed.avg[TimeUsageRow](_.work), 1).as[Double],
-        round(typed.avg[TimeUsageRow](_.primaryNeeds), 1).as[Double]
+        typed.avg(_.primaryNeeds),
+        typed.avg(_.work),
+        typed.avg(_.primaryNeeds)
       ).map(params => TimeUsageRow(
       params._1._1,
       params._1._2,
       params._1._3,
-      params._2,
-      params._3,
-      params._4
+      roundIt(params._2),
+      roundIt(params._3),
+      roundIt(params._4)
     ))
   }
 }
